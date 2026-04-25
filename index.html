@@ -272,6 +272,8 @@
                 <div class="card-row" id="red-cards"><div class="card"></div><div class="card"></div><div class="card"></div><div class="card"></div></div>
             </div>
             <div class="warning-btns">
+                <button class="btn btn-rect" onclick="addFoul('red')">反</button>
+                <button class="btn btn-rect" onclick="addWarningBoth()">両</button>
                 <button class="btn btn-rect" onclick="changeWarn('red', 1)">＋</button>
                 <button class="btn btn-rect" onclick="changeWarn('red', -1)">－</button>
             </div>
@@ -317,6 +319,8 @@
         </div>
         <div class="right-col">
             <div class="warning-btns" style="margin-bottom: 15px;">
+                <button class="btn btn-rect" onclick="addFoul('blue')">反</button>
+                <button class="btn btn-rect" onclick="addWarningBoth()">両</button>
                 <button class="btn btn-rect" onclick="changeWarn('blue', 1)">＋</button>
                 <button class="btn btn-rect" onclick="changeWarn('blue', -1)">－</button>
             </div>
@@ -357,8 +361,8 @@
     window.addEventListener('DOMContentLoaded', resizeApp);
 
     let state = {
-        red: { score: 0, warn: 0, ippon: false, techScore: 0, count4: 0, count2: 0 },
-        blue: { score: 0, warn: 0, ippon: false, techScore: 0, count4: 0, count2: 0 },
+        red: { score: 0, warn: 0, ippon: false, techScore: 0, count4: 0, count2: 0, foulCount: 0 },
+        blue: { score: 0, warn: 0, ippon: false, techScore: 0, count4: 0, count2: 0, foulCount: 0 },
         mainTime: 240, mainRun: false, mainMode: '4min',
         subs: { 
             redOsae: {v:0, r:false, max:20, type:'up'}, blueOsae: {v:0, r:false, max:20, type:'up'}, 
@@ -487,7 +491,9 @@
             if (['2', '抑2', '-抑2'].includes(typeLabel)) state[side].count2 += (d > 0 ? 1 : -1);
             if (d > 0) state.lastTechScorer = side;
         }
-        document.getElementById(`${side}-score`).innerText = state[side].score;
+        const scoreEl = document.getElementById(`${side}-score`);
+        scoreEl.innerText = state[side].score;
+        scoreEl.style.fontSize = state[side].score >= 10 ? '200px' : '440px';
         if (typeLabel) recordHistory(side, typeLabel);
         updateStatusLabels();
     }
@@ -495,25 +501,71 @@
     function confirmResetScore(side) {
         if (confirm(`${side === 'red' ? '赤' : '青'}コーナーの得点をリセットしますか？`)) {
             state[side].score = 0; state[side].ippon = false; state[side].techScore = 0; state[side].count4 = 0; state[side].count2 = 0;
-            document.getElementById(`${side}-score`).innerText = 0;
+            const scoreEl = document.getElementById(`${side}-score`);
+            scoreEl.innerText = 0;
+            scoreEl.style.fontSize = '440px';
             recordHistory(side, 'Reset'); updateStatusLabels();
         }
+    }
+
+    function addWarningBoth() {
+        if (state.red.warn < 4 && state.blue.warn < 4) {
+            state.red.warn++;
+            state.blue.warn++;
+            const rW = state.red.warn;
+            const bW = state.blue.warn;
+            
+            if (rW === 2 || rW === 3) changeScore('blue', 1, null);
+            if (bW === 2 || bW === 3) changeScore('red', 1, null);
+
+            const selfMap = { 1: '〇', 2: '〇', 3: '〇', 4: '☒' };
+            const oppMap = { 1: '0⃣', 2: '1⃣', 3: '1⃣', 4: '' };
+
+            state.history.push({
+                red: selfMap[rW] + (oppMap[bW] || ''),
+                blue: selfMap[bW] + (oppMap[rW] || '')
+            });
+
+            renderCards('red');
+            renderCards('blue');
+            updateStatusLabels();
+        }
+    }
+
+    function addFoul(side) {
+        if (state[side].warn >= 4) return;
+        state[side].foulCount++;
+        const opponent = side === 'red' ? 'blue' : 'red';
+
+        if (state[side].foulCount >= 2 || state[side].warn >= 3) {
+            state[side].warn = 4;
+            state.history.push({
+                red: side === 'red' ? '☒' : '',
+                blue: side === 'blue' ? '☒' : ''
+            });
+        } else {
+            state[side].warn++;
+            changeScore(opponent, 1, null);
+            state.history.push({
+                red: side === 'red' ? '反' : '1',
+                blue: side === 'blue' ? '反' : '1'
+            });
+        }
+        renderCards(side);
+        updateStatusLabels();
     }
 
     function changeWarn(side, d) {
         const opponent = side === 'red' ? 'blue' : 'red';
 
         if (d < 0) {
-            // 警告のキャンセルロジック
             if (state[side].warn > 0) {
                 const current = state[side].warn;
-                // 2枚目または3枚目の警告をキャンセルする場合、相手に入れた1点もキャンセル
                 if (current === 2 || current === 3) {
                     changeScore(opponent, -1, null);
                 }
-                // スコアシート（履歴）から直近の警告記録を削除
                 for (let i = state.history.length - 1; i >= 0; i--) {
-                    if (state.history[i][side] === '〇' || state.history[i][side] === '☒') {
+                    if (state.history[i][side] === '〇' || state.history[i][side] === '☒' || state.history[i][side] === '反') {
                         state.history.splice(i, 1);
                         break;
                     }
@@ -521,7 +573,6 @@
                 state[side].warn--;
             }
         } else {
-            // 警告の追加ロジック
             if (state[side].warn < 4) {
                 state[side].warn++;
                 const current = state[side].warn;
