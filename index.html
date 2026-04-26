@@ -272,6 +272,7 @@
                 <div class="card-row" id="red-cards"><div class="card"></div><div class="card"></div><div class="card"></div><div class="card"></div></div>
             </div>
             <div class="warning-btns">
+                <button class="btn btn-rect" onclick="disqualify('red')">失</button>
                 <button class="btn btn-rect" onclick="addFoul('red')">反</button>
                 <button class="btn btn-rect" onclick="addWarningBoth()">両</button>
                 <button class="btn btn-rect" onclick="changeWarn('red', 1)">＋</button>
@@ -319,6 +320,7 @@
         </div>
         <div class="right-col">
             <div class="warning-btns" style="margin-bottom: 15px;">
+                <button class="btn btn-rect" onclick="disqualify('blue')">失</button>
                 <button class="btn btn-rect" onclick="addFoul('blue')">反</button>
                 <button class="btn btn-rect" onclick="addWarningBoth()">両</button>
                 <button class="btn btn-rect" onclick="changeWarn('blue', 1)">＋</button>
@@ -361,8 +363,8 @@
     window.addEventListener('DOMContentLoaded', resizeApp);
 
     let state = {
-        red: { score: 0, warn: 0, ippon: false, techScore: 0, count4: 0, count2: 0, foulCount: 0 },
-        blue: { score: 0, warn: 0, ippon: false, techScore: 0, count4: 0, count2: 0, foulCount: 0 },
+        red: { score: 0, warn: 0, ippon: false, techScore: 0, count4: 0, count2: 0, foulCount: 0, count4D: 0 },
+        blue: { score: 0, warn: 0, ippon: false, techScore: 0, count4: 0, count2: 0, foulCount: 0, count4D: 0 },
         mainTime: 240, mainRun: false, mainMode: '4min',
         subs: { 
             redOsae: {v:0, r:false, max:20, type:'up'}, blueOsae: {v:0, r:false, max:20, type:'up'}, 
@@ -433,11 +435,11 @@
 
         if (state.red.warn >= 4) { newRedText = "失格"; } 
         else if (state.red.ippon) { newRedText = "一本勝ち"; } 
-        else if (state.red.score - state.blue.score >= 8) { newRedText = "テクニカル一本勝ち"; }
+        else if (state.red.score - state.blue.score >= 8 || state.red.count4D >= 2) { newRedText = "テクニカル一本勝ち"; }
 
         if (state.blue.warn >= 4) { newBlueText = "失格"; } 
         else if (state.blue.ippon) { newBlueText = "一本勝ち"; } 
-        else if (state.blue.score - state.red.score >= 8) { newBlueText = "テクニカル一本勝ち"; }
+        else if (state.blue.score - state.red.score >= 8 || state.blue.count4D >= 2) { newBlueText = "テクニカル一本勝ち"; }
 
         const prevRed = rL.innerText;
         const prevBlue = bL.innerText;
@@ -474,7 +476,7 @@
             entry[side] = '〇'; entry[opponent] = '0⃣';
         } else if (typeLabel === 'warn2' || typeLabel === 'warn3') {
             entry[side] = '〇'; entry[opponent] = '1⃣';
-        } else if (typeLabel === 'warn4') {
+        } else if (typeLabel === 'warn4' || typeLabel === 'DQ') {
             entry[side] = '☒'; entry[opponent] = '';
         } else {
             entry[side] = map[typeLabel] || typeLabel;
@@ -483,11 +485,20 @@
         if (entry.red !== '' || entry.blue !== '') state.history.push(entry);
     }
 
+    function disqualify(side) {
+        if (state[side].warn >= 4) return;
+        state[side].warn = 4;
+        recordHistory(side, 'DQ');
+        renderCards(side);
+        updateStatusLabels();
+    }
+
     function changeScore(side, d, typeLabel) {
         state[side].score = Math.max(0, state[side].score + d);
         if (typeLabel && !typeLabel.includes('warn') && typeLabel !== 'ippon' && typeLabel !== 'Reset') {
             state[side].techScore = Math.max(0, state[side].techScore + d);
             if (['4', '抑4', '4D'].includes(typeLabel)) state[side].count4 += (d > 0 ? 1 : -1);
+            if (typeLabel === '4D') state[side].count4D += (d > 0 ? 1 : -1);
             if (['2', '抑2', '-抑2'].includes(typeLabel)) state[side].count2 += (d > 0 ? 1 : -1);
             if (d > 0) state.lastTechScorer = side;
         }
@@ -500,7 +511,7 @@
 
     function confirmResetScore(side) {
         if (confirm(`${side === 'red' ? '赤' : '青'}コーナーの得点をリセットしますか？`)) {
-            state[side].score = 0; state[side].ippon = false; state[side].techScore = 0; state[side].count4 = 0; state[side].count2 = 0;
+            state[side].score = 0; state[side].ippon = false; state[side].techScore = 0; state[side].count4 = 0; state[side].count2 = 0; state[side].count4D = 0;
             const scoreEl = document.getElementById(`${side}-score`);
             scoreEl.innerText = 0;
             scoreEl.style.fontSize = '440px';
@@ -614,8 +625,8 @@
         if (b.warn >= 4) return "青コーナーの選手の失格で赤コーナーの選手の勝利です";
         if (r.ippon) return "赤コーナーの選手の一本勝ちです";
         if (b.ippon) return "青コーナーの選手の一本勝ちです";
-        if (r.score - b.score >= 8) return "赤コーナーの選手のテクニカル一本勝ちです";
-        if (b.score - r.score >= 8) return "青コーナーの選手のテクニカル一本勝ちです";
+        if (r.score - b.score >= 8 || r.count4D >= 2) return "赤コーナーの選手のテクニカル一本勝ちです";
+        if (b.score - r.score >= 8 || b.count4D >= 2) return "青コーナーの選手のテクニカル一本勝ちです";
         if (r.score > b.score) return "赤コーナーの選手のポイント判定勝ちです";
         if (b.score > r.score) return "青コーナーの選手のポイント判定勝ちです";
 
