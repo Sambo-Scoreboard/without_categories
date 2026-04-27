@@ -2,7 +2,7 @@
 <html lang="ja">
 <head>
     <meta charset="UTF-8">
-    <title>SAMBO Scoreboard - Logic Updated</title>
+    <title>SAMBO Scoreboard - Layout Adjusted</title>
     <style>
         :root { 
             --red: #d32f2f; --blue: #1976d2; --yellow: #ffeb3b; --white: #ffffff; --black: #000000;
@@ -31,7 +31,8 @@
             width: 640px; height: 100%; padding: 0 50px;
             display: flex; flex-direction: column; align-items: flex-end;
         }
-        .red-half .right-col { justify-content: flex-end; padding-bottom: 225px; }
+        /* 赤コーナーの警告エリアを引き上げ */
+        .red-half .right-col { justify-content: flex-start; padding-top: 40px; }
         .blue-half .right-col { justify-content: flex-start; padding-top: 225px; }
 
         .name-row {
@@ -267,16 +268,16 @@
             </div>
         </div>
         <div class="right-col">
-            <div class="warning-top">
-                <div class="warning-label">警告</div>
-                <div class="card-row" id="red-cards"><div class="card"></div><div class="card"></div><div class="card"></div><div class="card"></div></div>
-            </div>
-            <div class="warning-btns">
+            <div class="warning-btns" style="margin-bottom: 15px;">
                 <button class="btn btn-rect" onclick="disqualify('red')">失</button>
                 <button class="btn btn-rect" onclick="addFoul('red')">反</button>
                 <button class="btn btn-rect" onclick="addWarningBoth()">両</button>
                 <button class="btn btn-rect" onclick="changeWarn('red', 1)">＋</button>
                 <button class="btn btn-rect" onclick="changeWarn('red', -1)">－</button>
+            </div>
+            <div class="warning-top">
+                <div class="warning-label">警告</div>
+                <div class="card-row" id="red-cards"><div class="card"></div><div class="card"></div><div class="card"></div><div class="card"></div></div>
             </div>
         </div>
     </div>
