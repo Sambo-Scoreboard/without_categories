@@ -1,0 +1,427 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <title>BEACH SAMBO Scoreboard - Button Layout Adjusted</title>
+    <style>
+        :root { 
+            --red: #d32f2f; --blue: #1976d2; --yellow: #ffeb3b; --white: #ffffff; --black: #000000;
+            --purple: #6a1b9a;
+        }
+        * { box-sizing: border-box; }
+        html, body {
+            margin: 0; padding: 0; width: 100vw; height: 100vh; overflow: hidden;
+            background-color: var(--black); font-family: "Helvetica Neue", Arial, sans-serif;
+            color: var(--white); display: flex; justify-content: center; align-items: center; user-select: none;
+        }
+        #app {
+            width: 1920px; height: 1080px; position: relative;
+            transform-origin: center center; background-color: var(--black);
+            display: flex; flex-direction: column;
+        }
+        .half { width: 100%; height: 50%; display: flex; }
+        .red-half { background-color: var(--red); }
+        .blue-half { background-color: var(--blue); border-top: 2px solid rgba(255,255,255,0.1); }
+
+        .left-col {
+            width: 1280px; height: 100%; padding: 15px 30px 15px 60px;
+            display: flex; flex-direction: column;
+        }
+        .right-col {
+            width: 640px; height: 100%; padding: 0 50px;
+            display: flex; flex-direction: column; align-items: flex-end;
+        }
+        .red-half .right-col { justify-content: flex-start; padding-top: 40px; }
+        .blue-half .right-col { justify-content: flex-start; padding-top: 225px; }
+
+        .name-row {
+            width: 100%; border-bottom: 4px solid #fff; margin-bottom: 8px;
+            display: flex; align-items: stretch; gap: 0; height: 100px;
+        }
+        .name-input { 
+            background: transparent; border: none; color: #fff; font-size: 72px; 
+            font-weight: bold; outline: none; transition: color 0.3s;
+            flex-shrink: 0; width: 520px; padding: 0;
+        }
+        .name-input.winner-highlight { color: var(--yellow); }
+        .ippon-area { flex: 1; display: flex; align-items: center; padding-left: 30px; }
+        .ippon-label { 
+            font-size: 68px; color: var(--yellow); font-weight: bold; 
+            white-space: nowrap; text-shadow: 4px 4px 10px rgba(0,0,0,0.5); line-height: 1.0;
+        }
+
+        .main-section {
+            display: flex; align-items: center; flex: 1; min-height: 0;
+        }
+        .score-val { 
+            font-size: 440px; font-weight: 900; line-height: 0.85; 
+            font-family: 'Arial Black', sans-serif; 
+            margin-right: 30px; min-width: 300px; text-align: center; flex-shrink: 0;
+        }
+        .controls-wrapper { display: flex; align-items: center; gap: 60px; }
+        .btn-controls { display: flex; flex-direction: column; gap: 20px; flex-shrink: 0; }
+        .btn-row { display: flex; gap: 18px; align-items: center; }
+
+        .sub-timers { 
+            display: flex; flex-direction: column; gap: 22px; flex-shrink: 0;
+        }
+        .timer-group { display: flex; align-items: center; gap: 16px; font-weight: bold; }
+        .timer-label { min-width: 80px; text-align: right; font-size: 40px; }
+        .timer-display { 
+            background: rgba(0,0,0,0.45); font-family: 'Consolas', monospace; font-size: 60px; 
+            padding: 0; border-radius: 12px; width: 180px; height: 75px;
+            display: flex; align-items: center; justify-content: center;
+        }
+
+        .warning-top { display: flex; align-items: center; gap: 25px; margin-bottom: 15px; }
+        .warning-label { font-size: 36px; font-weight: bold; }
+        .card-row { display: flex; gap: 15px; }
+        .card { width: 110px; height: 190px; border: 4px solid #fff; border-radius: 12px; }
+        .card.active { background-color: var(--yellow); box-shadow: 0 0 25px var(--yellow); border-color: var(--yellow); }
+        .warning-btns { display: flex; gap: 15px; }
+
+        .main-timer-panel {
+            position: absolute; top: 50%; right: 0; transform: translateY(-50%);
+            width: 640px; height: 400px; background-color: var(--black);
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            border-left: 2px solid rgba(255,255,255,0.2); z-index: 10;
+        }
+        .main-timer-val { 
+            font-size: 260px; font-family: 'Arial Black', sans-serif; font-weight: 900; 
+            line-height: 1.0; margin: 0 0 5px 0;
+        }
+        .main-timer-panel .control-row { display: flex; gap: 10px; position: relative; }
+
+        .mode-dropdown {
+            display: none; position: absolute; bottom: 90px; left: 0;
+            background: #222; border: 2px solid #fff; border-radius: 10px;
+            overflow: hidden; z-index: 20; min-width: 220px;
+        }
+        .mode-dropdown.open { display: block; }
+        .mode-option {
+            padding: 18px 28px; font-size: 32px; font-weight: bold; cursor: pointer;
+            color: #fff; border-bottom: 1px solid #444;
+        }
+        .mode-option.selected { color: var(--yellow); }
+
+        .btn { cursor: pointer; background: transparent; color: #fff; border: 2px solid #fff; display: flex; align-items: center; justify-content: center; font-weight: bold; transition: 0.1s; outline: none; }
+        .btn-circle { width: 70px; height: 70px; border-radius: 50%; font-size: 28px; }
+        .btn-rect { width: 95px; height: 75px; border-radius: 12px; font-size: 32px; }
+        .btn-yellow { color: var(--yellow); border-color: var(--yellow); }
+
+        #jp-btn { position: absolute; left: 20px; top: 50%; transform: translateY(-50%); z-index: 100; width: 60px; height: 60px; border-radius: 30px; background: #444; font-size: 20px; }
+
+        /* スコアシート関連 */
+        #score-sheet-overlay {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.85); z-index: 1000;
+            display: none; justify-content: center; align-items: center;
+        }
+        .sheet-container { width: 90%; background: #fff; display: flex; flex-direction: column; border: 6px solid #fff; }
+        .sheet-data-area { display: flex; width: 100%; height: 400px; }
+        .sheet-col-names { width: 320px; display: flex; flex-direction: column; border-right: 2px solid #fff; }
+        .sheet-col-history { flex: 1; overflow-x: auto; display: flex; flex-direction: column; background: #fff; }
+        .sheet-col-total { width: 320px; display: flex; flex-direction: column; border-left: 2px solid #fff; }
+        .sheet-cell { flex: 1; display: flex; align-items: center; justify-content: center; font-size: 48px; font-weight: bold; }
+        .red-bg { background-color: var(--red); color: var(--white); }
+        .blue-bg { background-color: var(--blue); color: var(--white); }
+        .history-track-wrapper { display: flex; flex-direction: column; min-width: 100%; width: max-content; height: 100%; }
+        .history-row { flex: 1; display: flex; align-items: center; gap: 20px; padding: 0 30px; }
+        .history-item { font-size: 60px; font-weight: bold; min-width: 90px; height: 100%; display: flex; align-items: center; justify-content: center; }
+        .sheet-total-val { font-size: 100px; font-weight: 900; }
+        .sheet-result-row { height: 120px; display: flex; align-items: center; justify-content: center; font-size: 60px; font-weight: bold; color: var(--black); background: var(--white); border-top: 4px solid var(--black); }
+        .sheet-footer-row { height: 100px; display: flex; align-items: center; justify-content: center; background: var(--white); }
+        .btn-sheet-close { font-size: 36px; font-weight: bold; padding: 10px 80px; cursor: pointer; }
+    </style>
+</head>
+<body>
+
+<div id="app">
+    <button class="btn" style="position: absolute; bottom: 15px; left: 15px; font-size: 14px; opacity: 0.7; padding: 8px 20px; z-index: 100;" onclick="allReset()">ALL RESET</button>
+    <button id="jp-btn" class="btn" onclick="openScoreSheet()">JP</button>
+
+    <div id="score-sheet-overlay">
+        <div class="sheet-container">
+            <div class="sheet-data-area">
+                <div class="sheet-col-names">
+                    <div class="sheet-cell red-bg">赤</div>
+                    <div class="sheet-cell blue-bg">青</div>
+                </div>
+                <div class="sheet-col-history" id="sheet-scroll-area">
+                    <div class="history-track-wrapper">
+                        <div class="history-row red-bg" id="red-history-track"></div>
+                        <div class="history-row blue-bg" id="blue-history-track"></div>
+                    </div>
+                </div>
+                <div class="sheet-col-total">
+                    <div class="sheet-cell red-bg sheet-total-val" id="sheet-red-total">0</div>
+                    <div class="sheet-cell blue-bg sheet-total-val" id="sheet-blue-total">0</div>
+                </div>
+            </div>
+            <div class="sheet-result-row" id="sheet-result-text"></div>
+            <div class="sheet-footer-row">
+                <button class="btn-sheet-close" onclick="closeScoreSheet()">戻</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="half red-half">
+        <div class="left-col">
+            <div class="name-row">
+                <input type="text" id="red-name" class="name-input" value="赤コーナー">
+                <div class="ippon-area"><div id="red-ippon-txt" class="ippon-label"></div></div>
+            </div>
+            <div class="main-section">
+                <span id="red-score" class="score-val">0</span>
+                <div class="controls-wrapper">
+                    <div class="btn-controls">
+                        <div class="btn-row">
+                            <button class="btn btn-circle btn-yellow" onclick="changeScore('red', 1, '1')">1</button>
+                            <button class="btn btn-circle btn-yellow" onclick="changeScore('red', 2, '2')">2</button>
+                            <button class="btn btn-circle btn-yellow" onclick="changeScore('red', 4, '4')">4</button>
+                            <button class="btn btn-circle btn-yellow" onclick="setIppon('red')">本</button>
+                        </div>
+                        <div class="btn-row">
+                            <button class="btn btn-circle" onclick="resetScore('red')">R</button>
+                        </div>
+                    </div>
+                    <div class="sub-timers">
+                        <div class="timer-group"><span class="timer-label">医療</span><div id="redMed-val" class="timer-display">2:00</div><button class="btn btn-circle" id="btn-redMed" onclick="toggleSub('redMed')">▶</button><button class="btn btn-circle" onclick="resetSub('redMed')">R</button></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="right-col">
+            <div class="warning-btns" style="margin-bottom: 15px;">
+                <button class="btn btn-rect" onclick="disqualify('red')">失</button>
+                <button class="btn btn-rect" onclick="addFoulDirect('red')">反</button>
+                <button class="btn btn-rect" onclick="addWarningBoth()">両</button>
+                <button class="btn btn-rect" onclick="changeWarn('red', 1)">＋</button>
+                <button class="btn btn-rect" onclick="changeWarn('red', -1)">－</button>
+            </div>
+            <div class="warning-top">
+                <div class="warning-label">警告</div>
+                <div class="card-row" id="red-cards"><div class="card"></div><div class="card"></div></div>
+            </div>
+        </div>
+    </div>
+
+    <div class="half blue-half">
+        <div class="left-col">
+            <div class="name-row">
+                <input type="text" id="blue-name" class="name-input" value="青コーナー">
+                <div class="ippon-area"><div id="blue-ippon-txt" class="ippon-label"></div></div>
+            </div>
+            <div class="main-section">
+                <span id="blue-score" class="score-val">0</span>
+                <div class="controls-wrapper">
+                    <div class="btn-controls">
+                        <div class="btn-row">
+                            <button class="btn btn-circle btn-yellow" onclick="changeScore('blue', 1, '1')">1</button>
+                            <button class="btn btn-circle btn-yellow" onclick="changeScore('blue', 2, '2')">2</button>
+                            <button class="btn btn-circle btn-yellow" onclick="changeScore('blue', 4, '4')">4</button>
+                            <button class="btn btn-circle btn-yellow" onclick="setIppon('blue')">本</button>
+                        </div>
+                        <div class="btn-row">
+                            <button class="btn btn-circle" onclick="resetScore('blue')">R</button>
+                        </div>
+                    </div>
+                    <div class="sub-timers">
+                        <div class="timer-group"><span class="timer-label">医療</span><div id="blueMed-val" class="timer-display">2:00</div><button class="btn btn-circle" id="btn-blueMed" onclick="toggleSub('blueMed')">▶</button><button class="btn btn-circle" onclick="resetSub('blueMed')">R</button></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="right-col">
+            <div class="warning-btns" style="margin-bottom: 15px;">
+                <button class="btn btn-rect" onclick="disqualify('blue')">失</button>
+                <button class="btn btn-rect" onclick="addFoulDirect('blue')">反</button>
+                <button class="btn btn-rect" onclick="addWarningBoth()">両</button>
+                <button class="btn btn-rect" onclick="changeWarn('blue', 1)">＋</button>
+                <button class="btn btn-rect" onclick="changeWarn('blue', -1)">－</button>
+            </div>
+            <div class="warning-top">
+                <div class="warning-label">警告</div>
+                <div class="card-row" id="blue-cards"><div class="card"></div><div class="card"></div></div>
+            </div>
+        </div>
+    </div>
+
+    <div class="main-timer-panel" id="main-timer-panel">
+        <div id="main-clock" class="main-timer-val">3:00</div>
+        <div class="control-row">
+            <div id="mode-dropdown" class="mode-dropdown">
+                <div class="mode-option" onclick="setMode('5min')">5分</div>
+                <div class="mode-option" onclick="setMode('4min')">4分</div>
+                <div class="mode-option selected" onclick="setMode('3min')">3分</div>
+            </div>
+            <button class="btn btn-rect" onclick="toggleDropdown()">▼</button>
+            <button class="btn btn-rect" id="main-s-btn" onclick="toggleMain()">▶</button>
+            <button class="btn btn-rect" onclick="resetMain()">R</button>
+        </div>
+    </div>
+</div>
+
+<script>
+    let state = {
+        red: { score: 0, warn: 0, winner: false },
+        blue: { score: 0, warn: 0, winner: false },
+        mainTime: 180, mainRun: false, mainMode: '3min',
+        subs: { redMed: {v:120, r:false}, blueMed: {v:120, r:false} },
+        history: []
+    };
+
+    function resizeApp() {
+        const app = document.getElementById('app');
+        const scale = Math.min(window.innerWidth / 1920, window.innerHeight / 1080);
+        app.style.transform = `scale(${scale})`;
+    }
+    window.addEventListener('resize', resizeApp);
+    window.addEventListener('DOMContentLoaded', resizeApp);
+
+    let audioCtx = null;
+    function beep(long) {
+        if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        const o = audioCtx.createOscillator(); const g = audioCtx.createGain();
+        o.connect(g); g.connect(audioCtx.destination); o.type = 'square'; o.frequency.value = 440;
+        o.start(); const d = long ? 2.5 : 0.3;
+        g.gain.setValueAtTime(0.1, audioCtx.currentTime);
+        g.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + d); o.stop(audioCtx.currentTime + d);
+    }
+
+    function recordHistory(side, label) {
+        const entry = { red: '', blue: '' };
+        const map = { '1':'1', '2':'2', '4':'4', 'ippon':'一本', 'DQ':'☒', 'warn':'〇', 'foul':'反' };
+        entry[side] = map[label] || label;
+        state.history.push(entry);
+    }
+
+    function changeScore(side, d, typeLabel) {
+        if (state.red.winner || state.blue.winner) return;
+        
+        if (d > 0 && state.mainRun) {
+            state[side].score += d;
+            state[side].winner = true;
+            stopMain(); beep(true);
+            if (typeLabel) recordHistory(side, typeLabel);
+        } else {
+            state[side].score = Math.max(0, state[side].score + d);
+            if (typeLabel) recordHistory(side, typeLabel);
+        }
+        document.getElementById(`${side}-score`).innerText = state[side].score;
+        updateStatusLabels();
+    }
+
+    function addFoulDirect(side) {
+        if (state.red.winner || state.blue.winner) return;
+        const opponent = side === 'red' ? 'blue' : 'red';
+        recordHistory(side, 'foul');
+        state[opponent].score += 1;
+        document.getElementById(`${opponent}-score`).innerText = state[opponent].score;
+        state[opponent].winner = true;
+        stopMain(); beep(true);
+        updateStatusLabels();
+    }
+
+    function changeWarn(side, d) {
+        if (state.red.winner || state.blue.winner) return;
+        if (d > 0) {
+            if (state[side].warn < 2) {
+                state[side].warn++;
+                recordHistory(side, 'warn');
+                if (state[side].warn >= 2) {
+                    const opponent = side === 'red' ? 'blue' : 'red';
+                    state[opponent].winner = true;
+                    stopMain(); beep(true);
+                }
+            }
+        } else {
+            if (state[side].warn > 0) state[side].warn--;
+        }
+        renderCards(side);
+        updateStatusLabels();
+    }
+
+    function addWarningBoth() {
+        if (state.red.winner || state.blue.winner) return;
+        if (state.red.warn < 2) state.red.warn++;
+        if (state.blue.warn < 2) state.blue.warn++;
+        
+        state.history.push({ red: '〇', blue: '〇' });
+        renderCards('red'); renderCards('blue');
+
+        if (state.red.warn >= 2 && state.blue.warn >= 2) {
+            stopMain(); beep(true);
+        } else if (state.red.warn >= 2) {
+            state.blue.winner = true; stopMain(); beep(true);
+        } else if (state.blue.warn >= 2) {
+            state.red.winner = true; stopMain(); beep(true);
+        }
+        updateStatusLabels();
+    }
+
+    function disqualify(side) {
+        if (state.red.winner || state.blue.winner) return;
+        state[side].warn = 2;
+        const opp = side === 'red' ? 'blue' : 'red';
+        state[opp].winner = true;
+        recordHistory(side, 'DQ');
+        stopMain(); beep(true);
+        renderCards(side);
+        updateStatusLabels();
+    }
+
+    function setIppon(side) {
+        if (state.red.winner || state.blue.winner) return;
+        state[side].winner = true;
+        recordHistory(side, 'ippon');
+        stopMain(); beep(true);
+        updateStatusLabels();
+    }
+
+    function renderCards(side) {
+        const cards = document.getElementById(`${side}-cards`).children;
+        for (let i = 0; i < 2; i++) {
+            cards[i].classList.toggle('active', i < state[side].warn);
+        }
+    }
+
+    function updateStatusLabels() {
+        document.getElementById('red-ippon-txt').innerText = state.red.winner ? "勝者" : (state.red.warn >= 2 ? "失格" : "");
+        document.getElementById('blue-ippon-txt').innerText = state.blue.winner ? "勝者" : (state.blue.warn >= 2 ? "失格" : "");
+        document.getElementById('red-name').classList.toggle('winner-highlight', state.red.winner);
+        document.getElementById('blue-name').classList.toggle('winner-highlight', state.blue.winner);
+    }
+
+    function openScoreSheet() {
+        const rH = document.getElementById('red-history-track'), bH = document.getElementById('blue-history-track');
+        rH.innerHTML = ''; bH.innerHTML = '';
+        state.history.forEach(h => {
+            const rd = document.createElement('div'); rd.className = 'history-item'; rd.innerText = h.red; rH.appendChild(rd);
+            const bd = document.createElement('div'); bd.className = 'history-item'; bd.innerText = h.blue; bH.appendChild(bd);
+        });
+        document.getElementById('sheet-red-total').innerText = state.red.score;
+        document.getElementById('sheet-blue-total').innerText = state.blue.score;
+        document.getElementById('sheet-result-text').innerText = state.red.winner ? "赤コーナーの勝利" : (state.blue.winner ? "青コーナーの勝利" : "試合終了");
+        document.getElementById('score-sheet-overlay').style.display = 'flex';
+    }
+
+    function closeScoreSheet() { document.getElementById('score-sheet-overlay').style.display = 'none'; }
+    function toggleMain() { state.mainRun = !state.mainRun; document.getElementById('main-s-btn').innerText = state.mainRun ? "⏸" : "▶"; }
+    function stopMain() { state.mainRun = false; document.getElementById('main-s-btn').innerText = "▶"; }
+    function resetMain() { setMode(state.mainMode); }
+    function updateMainDisp() { document.getElementById('main-clock').innerText = Math.floor(state.mainTime/60) + ":" + String(state.mainTime%60).padStart(2,'0'); }
+    function setMode(mode) { state.mainMode = mode; state.mainTime = parseInt(mode)*60; updateMainDisp(); stopMain(); document.getElementById('mode-dropdown').classList.remove('open'); }
+    function toggleDropdown() { document.getElementById('mode-dropdown').classList.toggle('open'); }
+    function toggleSub(id) { state.subs[id].r = !state.subs[id].r; document.getElementById('btn-'+id).innerText = state.subs[id].r ? "⏸" : "▶"; }
+    function resetSub(id) { state.subs[id].r = false; state.subs[id].v = 120; document.getElementById(id+'-val').innerText = "2:00"; document.getElementById('btn-'+id).innerText = "▶"; }
+    function resetScore(side) { state[side].score = 0; state[side].winner = false; state[side].warn = 0; document.getElementById(`${side}-score`).innerText = 0; renderCards(side); updateStatusLabels(); }
+    function allReset() { if(confirm("全てリセットしますか？")) location.reload(); }
+
+    setInterval(() => {
+        if (state.mainRun && state.mainTime > 0) { state.mainTime--; updateMainDisp(); if (state.mainTime === 0) { stopMain(); beep(true); } }
+        for (let k in state.subs) { let t = state.subs[k]; if (t.r && t.v > 0) { t.v--; document.getElementById(k+'-val').innerText = Math.floor(t.v/60) + ":" + String(t.v%60).padStart(2,'0'); if (t.v <= 0) { t.r = false; beep(true); document.getElementById('btn-'+k).innerText = "▶"; } } }
+    }, 1000);
+</script>
+</body>
+</html>
